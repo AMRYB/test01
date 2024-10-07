@@ -108,6 +108,7 @@
     </div>
 
     <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <script>
         let students = [];
@@ -124,7 +125,7 @@
                 const excelData = XLSX.utils.sheet_to_json(firstSheet);
 
                 students = excelData.map(row => ({
-                    id: row['رقم الطالب'],
+                    id: row['رقم الطالب'].toString().trim(),
                     name: row['أسم الطالب'],
                     college: row['اسم الكليه'],
                     department: row['اسم القسم'],
@@ -141,7 +142,13 @@
         document.getElementById('student-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const studentId = document.getElementById('student-id').value.trim();
-            const student = students.find(s => s.id == studentId);
+
+            if (!/^\d+$/.test(studentId)) {
+                alert('Please enter a valid numeric Student ID.');
+                return;
+            }
+
+            const student = students.find(s => s.id === studentId);
             const studentInfoDiv = document.getElementById('student-info');
             const form = document.getElementById('student-form');
             studentInfoDiv.innerHTML = '';
@@ -176,7 +183,12 @@
 
             Instascan.Camera.getCameras().then(function (cameras) {
                 if (cameras.length > 0) {
-                    scanner.start(cameras[0]);
+                    const backCamera = cameras.find(camera => camera.name.toLowerCase().includes('back') || camera.name.toLowerCase().includes('environment'));
+                    if (backCamera) {
+                        scanner.start(backCamera);
+                    } else {
+                        scanner.start(cameras[0]);
+                    }
                 } else {
                     alert('No cameras found or access denied. Please allow camera access.');
                     video.style.display = 'none';
