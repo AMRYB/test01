@@ -55,19 +55,16 @@
             background-color: #6aabdf;
         }
 
-        a {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #d17640;
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
+        .qr-text {
+            display: block;
+            color: #d17640;
             cursor: pointer;
-            margin-bottom: 20px;
+            text-decoration: underline;
+            margin-top: 10px;
         }
 
-        a:hover {
-            background-color: #6aabdf;
+        .qr-text:hover {
+            color: #6aabdf;
         }
 
         video {
@@ -94,15 +91,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>Student Information Lookup</h1>
-
-        <a href="#" id="qr-reader-link">Open QR Code Reader</a>
-        <video id="preview"></video>
+        <h1>Student Information </h1>
 
         <form id="student-form">
             <input type="text" id="student-id" name="student-id" placeholder="Enter Student ID" required>
             <button type="submit">Search</button>
         </form>
+
+        <span class="qr-text" id="qr-reader-link">Open QR Code Reader</span>
+        <video id="preview"></video>
 
         <div id="student-info"></div>
     </div>
@@ -151,6 +148,7 @@
             const student = students.find(s => s.id === studentId);
             const studentInfoDiv = document.getElementById('student-info');
             const form = document.getElementById('student-form');
+            const qrReaderLink = document.getElementById('qr-reader-link');
             studentInfoDiv.innerHTML = '';
 
             if (student) {
@@ -162,9 +160,11 @@
                     <div><strong>Payment Status:</strong> ${student.paymentStatus}</div>
                 `;
                 form.style.display = 'none';
+                qrReaderLink.style.display = 'none';
             } else {
                 studentInfoDiv.innerHTML = '<div>No student found with this ID.</div>';
                 form.style.display = 'none';
+                qrReaderLink.style.display = 'none';
             }
 
             studentInfoDiv.style.display = 'block';
