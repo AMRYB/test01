@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Lookup with QR Code Reader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #143d87;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 50%;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #d17640;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #6aabdf;
+        }
+
+        a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #d17640;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        a:hover {
+            background-color: #6aabdf;
+        }
+
+        video {
+            display: none;
+            margin-top: 20px;
+            width: 100%;
+            border-radius: 15px;
+        }
+
+        #student-info {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #000;
+        }
+
+        #student-info div {
+            margin-bottom: 10px;
+        }
+
+        #student-info {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Information Lookup</h1>
+
+        <a href="#" id="qr-reader-link">Open QR Code Reader</a>
+        <video id="preview"></video>
+
+        <form id="student-form">
+            <input type="text" id="student-id" name="student-id" placeholder="Enter Student ID" required>
+            <button type="submit">Search</button>
+        </form>
+
+        <div id="student-info"></div>
+    </div>
+
+    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+    
+    <script>
+        let students = [];
+
+        async function loadExcelData() {
+            try {
+                const response = await fetch('Data.xlsx');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch Excel file');
+                }
+                const data = await response.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const excelData = XLSX.utils.sheet_to_json(firstSheet);
+
+                students = excelData.map(row => ({
+                    id: row['رقم الطالب'],
+                    name: row['أسم الطالب'],
+                    college: row['اسم الكليه'],
+                    department: row['اسم القسم'],
+                    year: row['الفرقة'],
+                    paymentStatus: row['حاله الدفع']
+                }));
+            } catch (error) {
+                console.error('Error loading Excel file:', error);
+            }
+        }
+
+        loadExcelData();
+
+        document.getElementById('student-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const studentId = document.getElementById('student-id').value.trim();
+            const student = students.find(s => s.id == studentId);
+            const studentInfoDiv = document.getElementById('student-info');
+            const form = document.getElementById('student-form');
+            studentInfoDiv.innerHTML = '';
+
+            if (student) {
+                studentInfoDiv.innerHTML = `
+                    <div><strong>Student Name:</strong> ${student.name}</div>
+                    <div><strong>College:</strong> ${student.college}</div>
+                    <div><strong>Department:</strong> ${student.department}</div>
+                    <div><strong>Year:</strong> ${student.year}</div>
+                    <div><strong>Payment Status:</strong> ${student.paymentStatus}</div>
+                `;
+                form.style.display = 'none';
+            } else {
+                studentInfoDiv.innerHTML = '<div>No student found with this ID.</div>';
+                form.style.display = 'none';
+            }
+
+            studentInfoDiv.style.display = 'block';
+        });
+
+        document.getElementById('qr-reader-link').addEventListener('click', function(event) {
+            event.preventDefault();
+            const video = document.getElementById('preview');
+            video.style.display = 'block';
+            
+            let scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
+            scanner.addListener('scan', function (content) {
+                document.getElementById('student-id').value = content;
+                video.style.display = 'none';
+            });
+
+            Instascan.Camera.getCameras().then(function (cameras) {
+                if (cameras.length > 0) {
+                    scanner.start(cameras[0]);
+                } else {
+                    alert('No cameras found or access denied. Please allow camera access.');
+                    video.style.display = 'none';
+                }
+            }).catch(function (e) {
+                console.error('Error starting camera:', e);
+                alert('Error starting camera. Please check browser permissions.');
+                video.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
